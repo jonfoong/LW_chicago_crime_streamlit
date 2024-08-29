@@ -1,4 +1,4 @@
-
+'''
 # Input area
 col1, col2, col3 = st.columns(3,
                               vertical_alignment='bottom')
@@ -28,3 +28,4 @@ df = pd.DataFrame({
 })
 
 st.map(df)
+'''
