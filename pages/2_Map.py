@@ -83,22 +83,30 @@ def create_map():
             pitch=50,
         ),
         layers=[
+            # FillExtrusionLayer for 3D buildings
             pdk.Layer(
                 'GeoJsonLayer',
                 data=districts_geojson,
                 pickable=True,
-                stroked=False,
-                filled=True,
                 extruded=True,  # Make it extruded for all features
                 elevation_scale=50,  # Adjust this scale as needed
                 elevation_range=[0, 1000],  # Set the elevation range
-                get_line_color=[255, 0, 0],
-                auto_highlight=True,
-                coverage=1,
-                get_line_width=40,  # Set the line width
-                get_fill_color=f"properties.community == '{district_selected}' ? [192, 192, 255, 200] : [192, 192, 255, 100]",
+                get_fill_color=f"properties.community == '{district_selected}' ? [192, 192, 255, 200] : [192, 192, 255, 0]",
                 get_elevation=f"properties.community == '{district_selected}' ? 20 : 0",  # Dynamic elevation,
-            )
+            ),
+            # LineLayer for borders
+            pdk.Layer(
+                'GeoJsonLayer',
+                data=districts_geojson,
+                pickable=True,
+                stroked=True,
+                extruded=False,
+                filled=True,
+                get_line_color=[00, 00, 80],  # Red color for borders
+                get_line_width=40,  # Width of the border lines
+                line_width_scale=1,
+                get_fill_color=f"properties.community == '{district_selected}' ? [192, 192, 255, 0] : [192, 192, 255, 100]",
+            ),
         ],
         tooltip={
             "html": "<b>District(No.):</b> {community} ({area_numbe})",

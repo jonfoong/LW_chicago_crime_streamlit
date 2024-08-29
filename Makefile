@@ -21,7 +21,7 @@ install_requirements:
 # ----------------------------------
 
 streamlit:
-	-@streamlit run 🏠︎_Dashboard.py
+	-@streamlit run Dashboard.py
 
 # ----------------------------------
 #    LOCAL INSTALL COMMANDS
