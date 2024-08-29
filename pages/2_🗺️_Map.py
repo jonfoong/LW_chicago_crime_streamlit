@@ -3,7 +3,6 @@ import json
 import pydeck as pdk
 import geopandas as gpd
 from shapely.geometry import shape
-from streamlit_plotly_mapbox_events import plotly_mapbox_events
 
 # General Settings
 st.set_page_config(page_title="Chicago Crime Map Overview", page_icon="🗺️", layout="wide")
