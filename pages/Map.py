@@ -1,15 +1,40 @@
+from Dashboard import chicago_crime_sidebar, load_districts_data
+
 import streamlit as st
-import json
 import pydeck as pdk
-import geopandas as gpd
-from shapely.geometry import shape
+import requests
+import random
 
 # General Settings
 st.set_page_config(page_title="Chicago Crime Map Overview", page_icon="🗺️", layout="wide")
 
+# Page content
+st.title('Chicago Crime Map')
+
 # Sidebar
+chicago_crime_sidebar()
+
+# Display Lottie animation with proper alignment
 st.sidebar.header('Settings')
 
+# Input Area
+col1, col2, col3 = st.columns(3, vertical_alignment='bottom')
+
+with col1:
+    date_to_predict = st.date_input("Day to predict:", format="DD.MM.YYYY")
+with col2:
+    districts_geojson = load_districts_data()  # Ensure data is loaded here
+    communities = sorted(
+        [feature['properties']['community'] for feature in districts_geojson['features']],
+        reverse=False
+    )
+    district_selected = st.selectbox(
+        "Which district do you want to look at?",
+        communities  # Already sorted
+    )
+with col3:
+    submit = st.button("Get crime prediction", 'prediction')
+    
 # Map Style
 map_style_options = {
     "Satellite with Streets": "mapbox://styles/mapbox/satellite-streets-v12",
@@ -26,51 +51,28 @@ selected_style_name = st.sidebar.selectbox(
 )
 chicago_map_style = map_style_options[selected_style_name] # Access Mapbox-Style-URL
 
-# Page content
-st.title('Chicago Crime Map')
+# Data
+districts_geojson = load_districts_data()
 
-@st.cache_data
-def load_districts_data():
-    # Pfad zur lokalen JSON-Datei
-    file_path = 'data/geodata.json'
+def add_prediction(districts_geojson, date_to_predict):
+    def fetch_crime_predictions(date_to_predict):
+        api_url = f"https://chicagocrimes-22489836433.europe-west1.run.app/predict?predict_day={date_to_predict}"
+        response = requests.get(api_url)
+        return response.json()['n_crimes']
     
-    # Daten aus der lokalen Datei lesen
-    with open(file_path, 'r', encoding='utf-8') as file:
-        districts_json = json.load(file)
+    elevations = []
     
-    # Capitalize the community names in the JSON data
-    for district in districts_json:
-        if 'community' in district:
-            district['community'] = district['community'].title()
-    
-    # Create GeoDataFrame
-    districts = gpd.GeoDataFrame.from_features([{
-        'geometry': shape(district['the_geom']),
-        'properties': district
-    } for district in districts_json])
-    
-    # Change GeoDataFrame in GeoJSON-Format
-    districts_geojson = json.loads(districts.to_json())
+    # Füge den Höhenwert für jedes Feature hinzu und sammle die Höhenwerte
+    for feature in districts_geojson['features']:
+        #elevation = fetch_crime_predictions(date_to_predict)
+        elevation = random.randint(1,100)
+        feature['properties']['elevation'] = elevation
+        elevations.append(elevation)
+
     return districts_geojson
 
-## Settings: Main page
-col1, col2, col3 = st.columns(3, vertical_alignment='bottom')
+updated_districts_geojson = add_prediction(districts_geojson, date_to_predict)
 
-with col1:
-    days_to_predict = st.number_input("Days to predict:", value=7)
-with col2:
-    districts_geojson = load_districts_data()  # Ensure data is loaded here
-    communities = [feature['properties']['community'] for feature in districts_geojson['features']]
-    district_selected = st.selectbox(
-        "Which district do you want to look at?",
-        list(communities),
-    )
-with col3:
-    submit = st.button("Get crime prediction", 'prediction')
-
-# Input warning
-if days_to_predict >= 30:
-    st.warning("Please bear in mind that long-term forecasts are becoming less accurate!", icon="⚠️")
 
 # Create the interactive map for initial load and when button is pressed
 def create_map():
@@ -86,22 +88,24 @@ def create_map():
             # FillExtrusionLayer for 3D buildings
             pdk.Layer(
                 'GeoJsonLayer',
-                data=districts_geojson,
+                data=updated_districts_geojson,
                 pickable=True,
                 extruded=True,  # Make it extruded for all features
-                elevation_scale=50,  # Adjust this scale as needed
+                elevation_scale=75,  # Adjust this scale as needed
                 elevation_range=[0, 1000],  # Set the elevation range
-                get_fill_color=f"properties.community == '{district_selected}' ? [192, 192, 255, 200] : [192, 192, 255, 0]",
+                auto_highlight=True,
+                get_fill_color=f"properties.community == '{district_selected}' ? [192, 192, 255, 250] : [192, 192, 255, 0]",
                 get_elevation=f"properties.community == '{district_selected}' ? 20 : 0",  # Dynamic elevation,
             ),
             # LineLayer for borders
             pdk.Layer(
                 'GeoJsonLayer',
-                data=districts_geojson,
+                data=updated_districts_geojson,
                 pickable=True,
                 stroked=True,
                 extruded=False,
                 filled=True,
+                auto_highlight=True,
                 get_line_color=[00, 00, 80],  # Red color for borders
                 get_line_width=40,  # Width of the border lines
                 line_width_scale=1,
@@ -109,13 +113,9 @@ def create_map():
             ),
         ],
         tooltip={
-            "html": "<b>District(No.):</b> {community} ({area_numbe})",
+            "html": "<b>District:</b> {community}<br><b>Crime Prediction:</b> {elevation}",
             "style": {"backgroundColor": "white", "color": "black"}
         }
     )
 
-if submit:
-    st.pydeck_chart(create_map(), use_container_width=True)
-else:
-    # Show map on initial load
-    st.pydeck_chart(create_map(), use_container_width=True)
+st.pydeck_chart(create_map(), use_container_width=True)
