@@ -39,3 +39,6 @@ typing_extensions==4.12.2
 tzdata==2024.1
 urllib3==2.2.2
 watchdog==4.0.2
+streamlit-lottie==0.2.0   # Beispiel für eine spezifische Version
+geopandas==0.12.2         # Beispiel für eine spezifische Version
+shapely==2.0.0            # Beispiel für eine spezifische Version
