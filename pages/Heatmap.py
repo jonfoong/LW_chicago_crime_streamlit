@@ -2,10 +2,10 @@ from Dashboard import chicago_crime_sidebar, load_districts_data
 
 import streamlit as st
 import pydeck as pdk
-import random
 import requests
 import pandas as pd
 import json
+import numpy as np
 
 # General Settings
 st.set_page_config(page_title="Chicago Crime Map Overview", page_icon="🗺️", layout="wide")
@@ -44,26 +44,27 @@ with col2:
     submit = st.button("Get crime prediction", 'prediction')
 
 # Data
-districts_geojson = json.loads(load_districts_data().to_json())
+districts_df = load_districts_data()
+districts_dict = districts_df.set_index('community')['area_num_1'].to_dict()
+indices = pd.to_numeric(districts_df['area_num_1']).to_list()
+districts_geojson = json.loads(districts_df.to_json())
 
 def add_prediction(districts_geojson, date_to_predict):
-    def fetch_crime_predictions(date_to_predict):
-        api_url = f"https://chicagocrimes-22489836433.europe-west1.run.app/predict?predict_day={date_to_predict}"
-        response = requests.get(api_url)
-        return response.json()['n_crimes']
-    
-    elevations = []
+    date_to_predict = date_to_predict.strftime('%Y-%m-%d')
+    api_url = f"https://chicago-crimes-tf-qnywvpba7q-ew.a.run.app/predict?date={date_to_predict}"
+    response = requests.get(api_url)
+    pred_crime = [response.json()[i][date_to_predict] for i in districts_dict.values()]
+    # sort again by order of geojson
+    pred_crime = [np.round(pred_crime[i-1], 1) for i in indices]
     
     # Füge den Höhenwert für jedes Feature hinzu und sammle die Höhenwerte
-    for feature in districts_geojson['features']:
-        #elevation = fetch_crime_predictions(date_to_predict)
-        elevation = random.randint(1,100)
-        feature['properties']['elevation'] = elevation
-        elevations.append(elevation)
+    for i in range(len(districts_df)):
+        #elevation = random.randint(1,100)
+        districts_geojson['features'][i]['properties']['elevation'] = pred_crime[i]
     
     # Bestimme die minimale und maximale Höhe
-    min_elevation = min(elevations)
-    max_elevation = max(elevations)
+    min_elevation = min(pred_crime)
+    max_elevation = max(pred_crime)
     
     # Funktion zur Interpolation der Farben von grün (0,255,0) bis rot (255,0,0)
     def get_color(value, min_value, max_value):

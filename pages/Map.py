@@ -5,6 +5,7 @@ import pydeck as pdk
 import requests
 import pandas as pd
 import json
+import numpy as np
 
 # General Settings
 st.set_page_config(page_title="Chicago Crime Map Overview", page_icon="🗺️", layout="wide")
@@ -65,7 +66,7 @@ def add_prediction(districts_geojson, date_to_predict):
     response = requests.get(api_url)
     pred_crime = [response.json()[i][date_to_predict] for i in districts_dict.values()]
     # sort again by order of geojson
-    pred_crime = [pred_crime[i-1] for i in indices]
+    pred_crime = [np.round(pred_crime[i-1], 1) for i in indices]
     
     # Füge den Höhenwert für jedes Feature hinzu und sammle die Höhenwerte
     for i in range(len(districts_df)):
@@ -120,5 +121,7 @@ def create_map():
             "style": {"backgroundColor": "white", "color": "black"}
         }
     )
-
-st.pydeck_chart(create_map(), use_container_width=True)
+if submit:
+    st.pydeck_chart(create_map(), use_container_width=True)
+else:
+    st.pydeck_chart(create_map(), use_container_width=True)
