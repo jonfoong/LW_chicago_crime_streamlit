@@ -8,13 +8,13 @@ import json
 import numpy as np
 
 # General Settings
-st.set_page_config(page_title="Chicago Crime Map Overview", page_icon="🗺️", layout="wide")
+#st.set_page_config(page_title="Chicago Crime Map Overview", page_icon="🗺️", layout="wide")
 
 # Page content
 st.title('Chicago Crime Map')
 
 # Sidebar
-chicago_crime_sidebar()
+chicago_crime_sidebar("map")
 
 # Display Lottie animation with proper alignment
 st.sidebar.header('Settings')
@@ -95,7 +95,7 @@ def create_map():
                 data=updated_districts_geojson,
                 pickable=True,
                 extruded=True,  # Make it extruded for all features
-                elevation_scale=75,  # Adjust this scale as needed
+                elevation_scale=100,  # Adjust this scale as needed
                 elevation_range=[0, 1000],  # Set the elevation range
                 auto_highlight=True,
                 get_fill_color=f"properties.community == '{district_selected}' ? [192, 192, 255, 250] : [192, 192, 255, 0]",
@@ -122,6 +122,4 @@ def create_map():
         }
     )
 if submit:
-    st.pydeck_chart(create_map(), use_container_width=True)
-else:
     st.pydeck_chart(create_map(), use_container_width=True)

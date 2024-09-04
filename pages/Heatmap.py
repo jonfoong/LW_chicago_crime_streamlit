@@ -8,10 +8,10 @@ import json
 import numpy as np
 
 # General Settings
-st.set_page_config(page_title="Chicago Crime Map Overview", page_icon="🗺️", layout="wide")
+#st.set_page_config(page_title="Chicago Crime Map Overview", page_icon="🗺️", layout="wide")
 
 # Sidebar
-chicago_crime_sidebar()
+chicago_crime_sidebar("heatmap")
 
 # Sidebar
 st.sidebar.header('Settings')
@@ -103,7 +103,7 @@ def create_map():
                 data=updated_districts_geojson,
                 pickable=True,
                 extruded=True,  # Make it extruded for all features
-                elevation_scale=50,  # Adjust this scale as needed
+                elevation_scale=100,  # Adjust this scale as needed
                 elevation_range=[0, 1000],  # Set the elevation range
                 auto_highlight=True,
                 get_fill_color="properties.colorcode",
@@ -117,7 +117,4 @@ def create_map():
     )
 
 if submit:
-    st.pydeck_chart(create_map(), use_container_width=True)
-else:
-    # Show map on initial load
     st.pydeck_chart(create_map(), use_container_width=True)

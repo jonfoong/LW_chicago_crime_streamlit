@@ -3,12 +3,13 @@ from Dashboard import chicago_crime_sidebar, load_districts_data
 import streamlit as st
 import requests
 import pandas as pd
+import numpy as np
 
 # Page setup
-st.set_page_config(page_title="Chicago Crime Statistics", page_icon="👮‍♂️", layout='wide')
+#st.set_page_config(page_title="Chicago Crime Statistics", page_icon="👮‍♂️", layout='wide')
 
 # Sidebar
-chicago_crime_sidebar()
+chicago_crime_sidebar("statistics")
 
 # Header
 st.title('Chicago Crime Statistics')
@@ -22,24 +23,29 @@ with col2:
     submit = st.button("Get crime prediction")
 
 # Data
-districts_geojson = load_districts_data()
-communities = [district['properties']['community'] for district in districts_geojson['features']]
+districts_df = load_districts_data()
+districts_dict = districts_df.set_index('community')['area_num_1'].to_dict()
+indices = pd.to_numeric(districts_df['area_num_1']).to_list()
 
-def fetch_crime_predictions_for_district(district, date):
-    api_url = f"https://chicagocrimes-22489836433.europe-west1.run.app/predict?predict_day={date}&district={district}"
+def fetch_crime_predictions_for_district(date_to_predict):
+    date_to_predict = date_to_predict.strftime('%Y-%m-%d')
+    api_url = f"https://chicago-crimes-tf-qnywvpba7q-ew.a.run.app/predict?date={date_to_predict}"
     response = requests.get(api_url)
-    return response.json().get('n_crimes', 0)  # Return 0 if 'n_crimes' is not in the response
+    pred_crime = np.round([response.json()[i][date_to_predict] for i in districts_dict.values()], 1)
+    # sort again by order of geojson
+    pred_crime = [pred_crime[i-1] for i in indices]
+    return pred_crime
 
-# Create a list to hold the results
+pred_crime = fetch_crime_predictions_for_district(date_to_predict)
+
 results = []
-
-# For each district, get the prediction for the given date
-for district in communities:
-    n_crimes = fetch_crime_predictions_for_district(district, date_to_predict.strftime('%Y-%m-%d'))
-    results.append({'District': district, 'Crime Prediction': n_crimes})
+# Create a list to hold the results
+for i in range(len(districts_dict)):
+    results.append({'District': list(districts_dict.keys())[i], 'Crime Prediction': pred_crime[i]})
 
 # Create a DataFrame for plotting
 df = pd.DataFrame(results)
 
 # Plotting with Streamlit
-st.bar_chart(df.set_index('District')['Crime Prediction'])
+if submit:
+    st.bar_chart(df.set_index('District')['Crime Prediction'])

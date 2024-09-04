@@ -5,17 +5,11 @@ import geopandas as gpd
 from shapely.geometry import shape
 import json
 
-def meine_funktion():
-    print("Das ist eine Funktion aus Dashboard.py")
-
 # Configuration of the site
-def chicago_crime_header():
-    st.set_page_config(page_title="Chicago Crime Prediction", page_icon="👮‍♂️", layout="wide")
-    
-chicago_crime_header()
+st.set_page_config(page_title="Chicago Crime Prediction", page_icon="👮‍♂️", layout="wide")
 
 # Sidebar
-def chicago_crime_sidebar():
+def chicago_crime_sidebar(key):
     def load_lottieurl(url: str):
         r = requests.get(url)
         if r.status_code != 200:
@@ -26,15 +20,15 @@ def chicago_crime_sidebar():
         container = st.container()  # Container für die Lottie-Animation
         with container:
             lottie_hello = load_lottieurl("https://lottie.host/ddc9bd14-5703-49fa-884c-c9236a48405f/y32PAxRVIG.json")
-            st_lottie(lottie_hello, key="hello", height=150, width=100)
+            st_lottie(lottie_hello, key=key, height=150, width=100)
         
-    st.sidebar.header("Menü")
+    st.sidebar.header("Menu")
     st.sidebar.page_link("Dashboard.py", label="Overview", icon="🚔")
     st.sidebar.page_link("pages/Statistics.py", label="Statistics", icon="💯")
     st.sidebar.page_link("pages/Map.py", label="Map", icon="🗺️")
     st.sidebar.page_link("pages/Heatmap.py", label="Heatmap", icon="📊")
 
-chicago_crime_sidebar()
+chicago_crime_sidebar("dashboard")
 
 # General district data
 @st.cache_data
