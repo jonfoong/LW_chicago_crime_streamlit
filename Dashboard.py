@@ -33,7 +33,6 @@ def chicago_crime_sidebar():
     st.sidebar.page_link("pages/Statistics.py", label="Statistics", icon="💯")
     st.sidebar.page_link("pages/Map.py", label="Map", icon="🗺️")
     st.sidebar.page_link("pages/Heatmap.py", label="Heatmap", icon="📊")
-    st.sidebar.page_link("pages/Prediction.py", label="Prediction", icon="📈")
 
 chicago_crime_sidebar()
 
@@ -59,8 +58,8 @@ def load_districts_data():
     } for district in districts_json])
     
     # Change GeoDataFrame in GeoJSON-Format
-    districts_geojson = json.loads(districts.to_json())
-    return districts_geojson
+    #districts_geojson = json.loads(districts.to_json())
+    return districts
 
 # Page content
 st.title("Welcome to Chicago's Future Crime Analytics")

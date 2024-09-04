@@ -5,6 +5,7 @@ import pydeck as pdk
 import random
 import requests
 import pandas as pd
+import json
 
 # General Settings
 st.set_page_config(page_title="Chicago Crime Map Overview", page_icon="🗺️", layout="wide")
@@ -43,7 +44,7 @@ with col2:
     submit = st.button("Get crime prediction", 'prediction')
 
 # Data
-districts_geojson = load_districts_data()
+districts_geojson = json.loads(load_districts_data().to_json())
 
 def add_prediction(districts_geojson, date_to_predict):
     def fetch_crime_predictions(date_to_predict):
@@ -119,33 +120,3 @@ if submit:
 else:
     # Show map on initial load
     st.pydeck_chart(create_map(), use_container_width=True)
-
-# Creat the dataframe for table below
-def extract_interesting_data(districts_geojson):
-    # Extract relevant properties into a DataFrame
-    data = []
-    for feature in districts_geojson['features']:
-        properties = feature['properties']
-        data.append({
-            'District': properties.get('community'),
-            'Area Number': properties.get('area_numbe'),
-            'Crime Prediction': properties.get('elevation'),
-            'Color': properties.get('colorcode'),
-        })
-
-    df = pd.DataFrame(data)
-    
-    # Sort by Crime Prediction descending
-    df = df.sort_values(by='Crime Prediction', ascending=False)
-    
-    return df
-def color_cell(val):
-    color = f'rgb({val[0]}, {val[1]}, {val[2]})'
-    return f'background-color: {color}'
-
-# Display table with filled color cells
-df = extract_interesting_data(updated_districts_geojson)
-df_styled = df.style.applymap(color_cell, subset=['Color'])
-
-st.write("### Crime Predictions by District")
-st.dataframe(df_styled.format({"Crime Prediction": "{:.0f}"}))

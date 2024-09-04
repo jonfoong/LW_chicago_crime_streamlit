@@ -3,7 +3,8 @@ from Dashboard import chicago_crime_sidebar, load_districts_data
 import streamlit as st
 import pydeck as pdk
 import requests
-import random
+import pandas as pd
+import json
 
 # General Settings
 st.set_page_config(page_title="Chicago Crime Map Overview", page_icon="🗺️", layout="wide")
@@ -17,15 +18,20 @@ chicago_crime_sidebar()
 # Display Lottie animation with proper alignment
 st.sidebar.header('Settings')
 
+districts_df = load_districts_data()
+districts_dict = districts_df.set_index('community')['area_num_1'].to_dict()
+indices = pd.to_numeric(districts_df['area_num_1']).to_list()
+districts_geojson = json.loads(districts_df.to_json())
+
 # Input Area
 col1, col2, col3 = st.columns(3, vertical_alignment='bottom')
 
 with col1:
     date_to_predict = st.date_input("Day to predict:", format="DD.MM.YYYY")
-with col2:
-    districts_geojson = load_districts_data()  # Ensure data is loaded here
+with col2:  # Ensure data is loaded here
+
     communities = sorted(
-        [feature['properties']['community'] for feature in districts_geojson['features']],
+        districts_df['community'],
         reverse=False
     )
     district_selected = st.selectbox(
@@ -52,22 +58,19 @@ selected_style_name = st.sidebar.selectbox(
 chicago_map_style = map_style_options[selected_style_name] # Access Mapbox-Style-URL
 
 # Data
-districts_geojson = load_districts_data()
 
 def add_prediction(districts_geojson, date_to_predict):
-    def fetch_crime_predictions(date_to_predict):
-        api_url = f"https://chicagocrimes-22489836433.europe-west1.run.app/predict?predict_day={date_to_predict}"
-        response = requests.get(api_url)
-        return response.json()['n_crimes']
-    
-    elevations = []
+    date_to_predict = date_to_predict.strftime('%Y-%m-%d')
+    api_url = f"https://chicago-crimes-tf-qnywvpba7q-ew.a.run.app/predict?date={date_to_predict}"
+    response = requests.get(api_url)
+    pred_crime = [response.json()[i][date_to_predict] for i in districts_dict.values()]
+    # sort again by order of geojson
+    pred_crime = [pred_crime[i-1] for i in indices]
     
     # Füge den Höhenwert für jedes Feature hinzu und sammle die Höhenwerte
-    for feature in districts_geojson['features']:
-        #elevation = fetch_crime_predictions(date_to_predict)
-        elevation = random.randint(1,100)
-        feature['properties']['elevation'] = elevation
-        elevations.append(elevation)
+    for i in range(len(districts_df)):
+        #elevation = random.randint(1,100)
+        districts_geojson['features'][i]['properties']['elevation'] = pred_crime[i]
 
     return districts_geojson
 
