@@ -1,10 +1,7 @@
-from Dashboard import chicago_crime_sidebar, load_districts_data
+from Dashboard import chicago_crime_sidebar, predictions, districts_df, indices, districts_geojson
 
 import streamlit as st
 import pydeck as pdk
-import requests
-import pandas as pd
-import json
 import numpy as np
 
 # General Settings
@@ -43,29 +40,26 @@ with col1:
 with col2:
     submit = st.button("Get crime prediction", 'prediction')
 
-# Data
-districts_df = load_districts_data()
-districts_dict = districts_df.set_index('community')['area_num_1'].to_dict()
-indices = pd.to_numeric(districts_df['area_num_1']).to_list()
-districts_geojson = json.loads(districts_df.to_json())
-
-def add_prediction(districts_geojson, date_to_predict):
+def add_prediction(districts_geojson, date_to_predict, predictions):
     date_to_predict = date_to_predict.strftime('%Y-%m-%d')
-    api_url = f"https://chicago-crimes-tf-qnywvpba7q-ew.a.run.app/predict?date={date_to_predict}"
-    response = requests.get(api_url)
-    pred_crime = [response.json()[i][date_to_predict] for i in districts_dict.values()]
+    # api_url = f"https://chicago-crimes-tf-qnywvpba7q-ew.a.run.app/predict?date={date_to_predict}"
+    # response = requests.get(api_url)
+
+    predictions = predictions.query(f'Date_day=="{date_to_predict}"')
+
+    pred_crime = predictions.crime_count.reset_index(drop = True)
     # sort again by order of geojson
     pred_crime = [np.round(pred_crime[i-1], 1) for i in indices]
-    
+
     # Füge den Höhenwert für jedes Feature hinzu und sammle die Höhenwerte
     for i in range(len(districts_df)):
         #elevation = random.randint(1,100)
         districts_geojson['features'][i]['properties']['elevation'] = pred_crime[i]
-    
+
     # Bestimme die minimale und maximale Höhe
     min_elevation = min(pred_crime)
     max_elevation = max(pred_crime)
-    
+
     # Funktion zur Interpolation der Farben von grün (0,255,0) bis rot (255,0,0)
     def get_color(value, min_value, max_value):
         if max_value == min_value:
@@ -75,15 +69,15 @@ def add_prediction(districts_geojson, date_to_predict):
         red = int(255 * ratio)
         green = int(255 * (1 - ratio))
         return [red, green, 0]
-    
+
     # Setze den colorcode basierend auf der Farbskala
     for feature in districts_geojson['features']:
         elevation = feature['properties']['elevation']
         feature['properties']['colorcode'] = get_color(elevation, min_elevation, max_elevation)
-    
+
     return districts_geojson
 
-updated_districts_geojson = add_prediction(districts_geojson, date_to_predict)
+updated_districts_geojson = add_prediction(districts_geojson, date_to_predict, predictions)
 
 # Create the interactive map for initial load and when button is pressed
 
