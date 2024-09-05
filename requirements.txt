@@ -44,3 +44,4 @@ geopandas==0.12.2         # Beispiel für eine spezifische Version
 shapely==1.8.5.post1          # Beispiel für eine spezifische Version
 google-cloud-bigquery
 db_dtypes
+plotly-express
