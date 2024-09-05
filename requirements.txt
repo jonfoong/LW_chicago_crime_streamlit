@@ -42,3 +42,4 @@ watchdog==4.0.2
 streamlit-lottie==0.0.5   # Beispiel für eine spezifische Version
 geopandas==0.12.2         # Beispiel für eine spezifische Version
 shapely==1.8.5.post1          # Beispiel für eine spezifische Version
+google-cloud-bigquery==2.34.4
