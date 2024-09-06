@@ -1,8 +1,15 @@
-from Dashboard import chicago_crime_sidebar, predictions, districts_df, indices, districts_geojson
+from Dashboard import chicago_crime_sidebar, load_districts_data, predictions
 
 import streamlit as st
 import pydeck as pdk
 import numpy as np
+import json
+import pandas as pd
+
+districts_df = load_districts_data()
+districts_dict = districts_df.set_index('community')['area_num_1'].to_dict()
+indices = pd.to_numeric(districts_df['area_num_1']).to_list()
+districts_geojson = json.loads(districts_df.to_json())
 
 # General Settings
 #st.set_page_config(page_title="Chicago Crime Map Overview", page_icon="🗺️", layout="wide")
@@ -47,6 +54,8 @@ def add_prediction(districts_geojson, date_to_predict, predictions):
 
     predictions = predictions.query(f'Date_day=="{date_to_predict}"')
 
+    predictions.query('community_area==8')
+
     pred_crime = predictions.crime_count.reset_index(drop = True)
     # sort again by order of geojson
     pred_crime = [np.round(pred_crime[i-1], 1) for i in indices]
@@ -73,7 +82,7 @@ def add_prediction(districts_geojson, date_to_predict, predictions):
     # Setze den colorcode basierend auf der Farbskala
     for feature in districts_geojson['features']:
         elevation = feature['properties']['elevation']
-        feature['properties']['colorcode'] = get_color(elevation, min_elevation, max_elevation)
+        feature['properties']['colorcode'] = get_color(np.log(elevation), np.log(min_elevation), np.log(max_elevation))
 
     return districts_geojson
 

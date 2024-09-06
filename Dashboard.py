@@ -90,7 +90,7 @@ Despite our efforts to use variables such as weather conditions, holidays, and w
 """)
 # Cut out to shorten the intro a bit:
 #Nonetheless, it is crucial to acknowledge that unexpected events, like another public health crisis, episodes of civil unrest, or shifts in economic stability, can dramatically reshape the landscape of crime. While some effects, like those of the COVID-19 pandemic, may seem temporary, they could have long-lasting repercussions, such as changes in urban mobility or persistent educational deficits from school closures.
-#The key takeaway is the need for caution and flexibility in crime forecasting. Models must be continuously updated to reflect new data and the evolving conditions of each community. This approach helps mitigate the inherent uncertainty in predicting crime, ensuring that policies are responsive to both predictable trends and unforeseen challenges.
+#The key takeaway is the need for caution and flexibility in crime forecasting. Models must be continuously updated to reflect new data and the evolving conditions of each community. This approach helps mitigate the inherent uncertainty in predicting scrime, ensuring that policies are responsive to both predictable trends and unforeseen challenges.
 st_lottie("https://lottie.host/90eb7346-7c52-4a86-bb9c-6cd5b5d93800/3ciMAFX8GE.json",
           key="arrest", height=350, width=350)
 
@@ -99,8 +99,7 @@ st_lottie("https://lottie.host/90eb7346-7c52-4a86-bb9c-6cd5b5d93800/3ciMAFX8GE.j
 
 predictions = auth_to_gbq()
 predictions['Date_day'] = predictions['Date_day'].astype(str)
+predictions['community_area'] = predictions['community_area'].astype(int)
+predictions = predictions.query('community_area!=0')
 
-districts_df = load_districts_data()
-districts_dict = districts_df.set_index('community')['area_num_1'].to_dict()
-indices = pd.to_numeric(districts_df['area_num_1']).to_list()
-districts_geojson = json.loads(districts_df.to_json())
+predictions = predictions.sort_values(["Date_day", "community_area"])

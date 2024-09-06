@@ -1,9 +1,13 @@
-from Dashboard import chicago_crime_sidebar, predictions, districts_dict, indices
+from Dashboard import chicago_crime_sidebar, load_districts_data, predictions
 
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+
+districts_df = load_districts_data()
+districts_dict = districts_df.set_index('community')['area_num_1'].to_dict()
+indices = pd.to_numeric(districts_df['area_num_1']).to_list()
 
 # Page setup
 #st.set_page_config(page_title="Chicago Crime Statistics", page_icon="👮‍♂️", layout='wide')
@@ -21,8 +25,6 @@ with col1:
     date_to_predict = st.date_input("Day to predict:", format="DD.MM.YYYY")
 with col2:
     submit = st.button("Get crime prediction")
-#date_to_predict = "2024-09-05"
-
 
 def fetch_crime_predictions_for_district(date_to_predict, predictions):
     date_to_predict = date_to_predict.strftime('%Y-%m-%d')
@@ -35,8 +37,6 @@ def fetch_crime_predictions_for_district(date_to_predict, predictions):
     # sort again by order of geojson
     pred_crime = [np.round(pred_crime[i-1], 1) for i in indices]
     return pred_crime
-
-
 
 pred_crime = fetch_crime_predictions_for_district(date_to_predict, predictions)
 
