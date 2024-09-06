@@ -23,7 +23,7 @@ def auth_to_gbq():
     query_load_raw_data = f"""
     SELECT *
     FROM
-    `wagon-bootcamp-428814.chicago_crime.predictions_fake`
+    `wagon-bootcamp-428814.chicago_crime.predictions_real`
     """
     query_out = client.query(query_load_raw_data)
     query_out.result()
